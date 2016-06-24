@@ -13,7 +13,17 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="startPicker"
-    android:layout_centerInParent="true"
+    android:layout_centerVertical="true"
     android:id="@+id/bt1"
     />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="curnt plc"
+        android:layout_alignTop="@+id/bt1"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:id="@+id/bt2"
+        />
+
 </RelativeLayout>
