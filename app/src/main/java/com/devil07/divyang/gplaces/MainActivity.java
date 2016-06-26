@@ -29,6 +29,14 @@ import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
     private GoogleApiClient mGoogleApiClient;
@@ -37,10 +45,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private static final int GOOGLE_API_CLIENT_ID = 0;
     TextView tv1;
     private static final String TAG = "MainActivity";
-    String rom=" ";
+    String rom = " ";
     private static final int PERMISSION_REQUEST_CODE = 100;
     PendingResult<PlaceLikelihoodBuffer> result;
-    private boolean permissionGranted=false;
+    private boolean permissionGranted = false;
+    ArrayList<MapDetails> mapDetails = new ArrayList<MapDetails>();
+    double lat;
+    double lng;
+    private GoogleMap googleMap;
+    MarkerOptions marker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,13 +61,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         setContentView(R.layout.activity_main);
         bt1 = (Button) findViewById(R.id.bt1);
         bt2 = (Button) findViewById(R.id.bt2);
-
+        tv1 = (TextView) findViewById(R.id.tv1);
 
         mGoogleApiClient = new GoogleApiClient
                 .Builder(this)
                 .addApi(Places.GEO_DATA_API)
                 .addApi(Places.PLACE_DETECTION_API)
-                .enableAutoManage(this,GOOGLE_API_CLIENT_ID, this)
+                .enableAutoManage(this, GOOGLE_API_CLIENT_ID, this)
                 .build();
 
 
@@ -75,7 +88,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             }
         });
 
-
         bt2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -84,11 +96,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     requestPermissions(
                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                             PERMISSION_REQUEST_CODE);
-                }
-                else {
-                    permissionGranted=true;
+                } else {
+                    permissionGranted = true;
                 }
                 callapi();
+
+
+
+
 
 
 
@@ -132,7 +147,46 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 }*/
 
 
+            }
+        });
 
+
+    }
+
+
+    private void callapi() throws SecurityException {
+
+        PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
+                .getCurrentPlace(mGoogleApiClient, null);
+        result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+            @Override
+            public void onResult(@NonNull PlaceLikelihoodBuffer likelyPlaces) {
+                Toast.makeText(MainActivity.this, "out for" + likelyPlaces.getCount(), Toast.LENGTH_SHORT).show();
+
+                for (int i = 0; i < likelyPlaces.getCount(); i++) {
+                    //     Toast.makeText(MainActivity.this,"in for",Toast.LENGTH_SHORT).show();
+                    Place pla = likelyPlaces.get(i).getPlace();
+
+                    lat = pla.getLatLng().latitude;
+                    lng = pla.getLatLng().longitude;
+                    rom = pla.getName().toString();
+                    //   Toast.makeText(MainActivity.this,"Place-"+rom+lat,Toast.LENGTH_SHORT).show();
+                    MapDetails obj = new MapDetails(lat, lng, rom);
+                    mapDetails.add(obj);
+
+                }
+
+                likelyPlaces.release();
+                Toast.makeText(MainActivity.this, "in initial" + mapDetails.size(), Toast.LENGTH_SHORT).show();
+
+
+                try {
+                    // Loading map
+                    initilizeMap();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
 
             }
@@ -142,51 +196,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     }
 
 
-
-    private void callapi()throws SecurityException {
-
-      PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
-          .getCurrentPlace(mGoogleApiClient, null);
-      result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
-        @Override
-        public void onResult(@NonNull PlaceLikelihoodBuffer likelyPlaces) {
-             Toast.makeText(MainActivity.this,"out for",Toast.LENGTH_SHORT).show();
-
-            for(int i=0;i<likelyPlaces.getCount();i++)
-            {
-               // Toast.makeText(MainActivity.this,"in for",Toast.LENGTH_SHORT).show();
-                    Place pla =likelyPlaces.get(i).getPlace();
-
-//                    rom=pla.getName().toString();
-                Toast.makeText(MainActivity.this,"Place-"+rom,Toast.LENGTH_SHORT).show();
-
-            }
-          likelyPlaces.release();
-        }
-      });
-
-
-    }
-
-
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
 
+        Log.e(TAG, "Google Places API connection failed with error code: "
+                + connectionResult.getErrorCode());
 
-
-
-
-
-
-
-         Log.e(TAG, "Google Places API connection failed with error code: "
-                        + connectionResult.getErrorCode());
-
-                Toast.makeText(this,
-                        "Google Places API connection failed with error code:" +
-                                connectionResult.getErrorCode(),
-                        Toast.LENGTH_LONG).show();
+        Toast.makeText(this,
+                "Google Places API connection failed with error code:" +
+                        connectionResult.getErrorCode(),
+                Toast.LENGTH_LONG).show();
 
 
     }
@@ -208,20 +228,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
 
-        Toast.makeText(MainActivity.this,"in request"+requestCode,Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, "in request" + requestCode, Toast.LENGTH_SHORT).show();
         switch (requestCode) {
             case PERMISSION_REQUEST_CODE:
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    permissionGranted=true;
+                    permissionGranted = true;
 
-                   Toast.makeText(MainActivity.this,"Granted",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Granted", Toast.LENGTH_SHORT).show();
                     callapi();
-                }
-                else {
+                } else {
 
-                    Toast.makeText(MainActivity.this,"not Granted",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "not Granted", Toast.LENGTH_SHORT).show();
 
                 }
                 break;
@@ -243,36 +262,42 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mGoogleApiClient.disconnect();
     }
 
-    public void requestPermission()
-    {
+    public void requestPermission() {
 
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(MainActivity.this,Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 requestPermissions(
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         PERMISSION_REQUEST_CODE);
-            }
-            else {
-                permissionGranted=true;
+            } else {
+                permissionGranted = true;
             }
 
 
             return;
         }
 
-
-
     }
 
     @Override
     protected void onPostResume() {
         super.onPostResume();
-        if(permissionGranted) {
+        if (permissionGranted) {
             if (mGoogleApiClient.isConnected()) {
                 callapi();
             }
         }
 
     }
+
+    private void initilizeMap() {
+
+
+        Intent intent = new Intent(MainActivity.this, Displaymaps.class);
+        intent.putExtra("FILES_TO_SEND", mapDetails);
+        startActivity(intent);
+    }
+
+
 }

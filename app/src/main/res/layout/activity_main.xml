@@ -25,5 +25,12 @@
         android:layout_alignParentEnd="true"
         android:id="@+id/bt2"
         />
-
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/bt1"
+        android:text="hellloo"
+        android:textSize="30dp"
+        android:id="@+id/tv1"
+        />
 </RelativeLayout>

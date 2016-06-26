@@ -21,10 +21,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity android:name=".Displaymaps">
+        </activity>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAj1iegGAuNOZrgxIoeJOJHwoqngsE7dVI"/>
+
+
+
     </application>
 
 
